@@ -1,62 +1,74 @@
-/*!	
-* FitText.js 1.0 jQuery free version
-*
-* Copyright 2011, Dave Rupert http://daverupert.com 
-* Released under the WTFPL license 
-* http://sam.zoy.org/wtfpl/
-* Modified by Slawomir Kolodziej http://slawekk.info
-*
-* Date: Tue Aug 09 2011 10:45:54 GMT+0200 (CEST)
-*/
-(function(){
-  var css = function (el, prop) {
-    return window.getComputedStyle ? getComputedStyle(el).getPropertyValue(prop) : el.currentStyle[prop];
-  };
-  
-  var addEvent = function (el, type, fn) {
-    if (el.addEventListener)
-      el.addEventListener(type, fn, false);
-		else
-			el.attachEvent('on'+type, fn);
-  };
-  
-  var extend = function(obj,ext){
-    for(key in ext)
-      if(ext.hasOwnProperty(key))
-        obj[key] = ext[key];
-    return obj;
-  };
+/* ng-FitText.js v3.1.0
+ * https://github.com/patrickmarabeas/ng-FitText.js
+ *
+ * Original jQuery project: https://github.com/davatron5000/FitText.js
+ * Includes use of Underscore's debounce function
+ *
+ * Copyright 2014, Patrick Marabeas http://marabeas.io
+ * Released under the MIT license
+ * http://opensource.org/licenses/mit-license.php
+ *
+ * Date: 18/10/2014
+ */
 
-  window.fitText = function (el, kompressor, options) {
+(function(window, document, angular, undefined) {
 
-    var settings = extend({
-      'minFontSize' : -1/0,
-      'maxFontSize' : 1/0
-    },options);
+  'use strict';
 
-    var fit = function (el) {
-      var compressor = kompressor || 1;
+  angular.module('ngFitText', [])
+    .value( 'config', {
+      'debounce': false,
+      'delay': 250,
+      'min': undefined,
+      'max': undefined
+    })
 
-      var resizer = function () {
-        el.style.fontSize = Math.max(Math.min(el.clientWidth / (compressor*10), parseFloat(settings.maxFontSize)), parseFloat(settings.minFontSize)) + 'px';
+    .directive('fittext', ['$timeout', 'config', 'fitTextConfig', function($timeout, config, fitTextConfig) {
+      return {
+        restrict: 'A',
+        scope: true,
+        link: function(scope, element, attrs) {
+          angular.extend(config, fitTextConfig.config);
+
+          element[0].style.display = 'inline-block';
+          element[0].style.whiteSpace = 'nowrap';
+          element[0].style.lineHeight = '1';
+
+          var parent = document.getElementsByTagName('aside');
+          var compressor = attrs.fittext || 1;
+          var minFontSize = attrs.fittextMin || config.min || Number.NEGATIVE_INFINITY;
+          var maxFontSize = attrs.fittextMax || config.max || Number.POSITIVE_INFINITY;
+
+          var resizer = function() {
+            $timeout( function() {
+              var ratio = element[0].offsetHeight / element[0].offsetWidth;
+              element[0].style.fontSize = Math.max(
+                Math.min(parent[0].offsetWidth * ratio * compressor,
+                  parseFloat(maxFontSize)
+                ),
+                parseFloat(minFontSize)
+              ) + 'px';
+            },50);
+          }; resizer();
+
+          scope.$watch(attrs.ngModel, function() { resizer() });
+
+          config.debounce
+            ? angular.element(window).bind('resize', config.debounce(function(){ scope.$apply(resizer)}, config.delay))
+            : angular.element(window).bind('resize', function(){ scope.$apply(resizer)});
+        }
+      }
+    }])
+
+    .provider('fitTextConfig', function() {
+      var self = this;
+      this.config = {};
+      this.$get = function() {
+        var extend = {};
+        extend.config = self.config;
+        return extend;
       };
+      return this;
+    });
 
-      // Call once to set.
-      resizer();
-
-      // Bind events
-      // If you have any js library which support Events, replace this part
-      // and remove addEvent function (or use original jQuery version)
-      addEvent(window, 'resize', resizer);
-    };
-
-    if (el.length)
-      for(var i=0; i<el.length; i++)
-        fit(el[i]);
-    else
-      fit(el);
-
-    // return set of elements
-    return el;
-  };
-})();
+})(window, document, angular);
