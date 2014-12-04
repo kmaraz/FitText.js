@@ -30,12 +30,8 @@
         link: function(scope, element, attrs) {
           angular.extend(config, fitTextConfig.config);
 
-          element[0].style.display = 'inline-block';
-          element[0].style.whiteSpace = 'nowrap';
-          element[0].style.lineHeight = '1';
-
           var parent = document.getElementsByTagName('aside');
-          var compressor = attrs.fittext || 1;
+          var compressor = attrs.fittext || 0.9;
           var minFontSize = attrs.fittextMin || config.min || Number.NEGATIVE_INFINITY;
           var maxFontSize = attrs.fittextMax || config.max || Number.POSITIVE_INFINITY;
 
