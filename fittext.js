@@ -23,7 +23,7 @@
       'max': undefined
     })
 
-    .directive('fittext', ['$timeout', 'config', 'fitTextConfig', function($timeout, config, fitTextConfig) {
+    .directive('fittext', ['$timeout', 'config', 'fitTextConfig', '$window', function($timeout, config, fitTextConfig, $window) {
       return {
         restrict: 'A',
         scope: true,
@@ -34,18 +34,25 @@
           var compressor = attrs.fittext || 0.9;
           var minFontSize = attrs.fittextMin || config.min || Number.NEGATIVE_INFINITY;
           var maxFontSize = attrs.fittextMax || config.max || Number.POSITIVE_INFINITY;
+          var temp_size = 0;
 
           var resizer = function() {
             $timeout( function() {
               var ratio = element[0].offsetHeight / element[0].offsetWidth;
-              element[0].style.fontSize = Math.max(
+              var size = Math.max(
                 Math.min(parent[0].offsetWidth * ratio * compressor,
                   parseFloat(maxFontSize)
                 ),
                 parseFloat(minFontSize)
-              ) + 'px';
-            },50);
-          }; resizer();
+              )
+              element[0].style.fontSize = size + 'px';
+              if(Math.round(temp_size) !== Math.round(size)) {
+                temp_size = size
+                resizer();
+              }
+            }, 50);
+          };
+          resizer();
 
           scope.$watch(attrs.ngModel, function() { resizer() });
 
