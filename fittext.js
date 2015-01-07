@@ -33,7 +33,7 @@
           var parent = document.getElementsByTagName('aside');
           var compressor = attrs.fittext || 0.9;
           var minFontSize = attrs.fittextMin || config.min || Number.NEGATIVE_INFINITY;
-          var maxFontSize = attrs.fittextMax || config.max || Number.POSITIVE_INFINITY;
+          var maxFontSize = attrs.fittextMax || config.max || 50; //Number.POSITIVE_INFINITY;
           var temp_size = 0;
 
           var resizer = function() {
